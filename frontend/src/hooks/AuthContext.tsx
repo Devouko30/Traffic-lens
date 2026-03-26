@@ -18,67 +18,32 @@ interface AuthCtx {
 
 const AuthContext = createContext<AuthCtx | null>(null);
 
-// Read the cached Supabase session from localStorage synchronously so we
-// can set ready=true immediately on page load without waiting for a network round-trip.
-function getInitialSession(): Session | null {
-  if (!supabaseConfigured) return null;
-  try {
-    // Supabase stores the session under "sb-<project>-auth-token" in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const s: Session | null = parsed?.currentSession ?? parsed ?? null;
-          // Treat as valid only if the access token hasn't expired yet
-          if (s?.access_token && s.expires_at && s.expires_at * 1000 > Date.now()) {
-            return s;
-          }
-        }
-      }
-    }
-  } catch {
-    // ignore parse errors
-  }
-  return null;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const [session, setSession] = useState<Session | null>(getInitialSession);
-  // If we already have a valid cached session we're ready immediately
-  const [ready, setReady] = useState(() => !supabaseConfigured || getInitialSession() !== null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigured) {
       setReady(true);
       return;
     }
-
-    // Subscribe first so we never miss an event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setReady(true);
-    });
-
-    // Kick off a background refresh to validate/renew the token.
-    // We don't block rendering on this — the cached session is already shown.
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setReady(true);
     }).catch(() => setReady(true));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     if (!supabaseConfigured) throw new Error("App not configured — contact admin.");
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    // Set session synchronously before navigating so PrivateLayout sees
-    // isAuthenticated=true immediately — no spinner flash on redirect.
-    if (data.session) setSession(data.session);
     navigate("/dashboard", { replace: true });
   }, [navigate]);
 
