@@ -26,6 +26,9 @@
     --navy-border: #1E2D45;
     --slate: #94A3B8;
     --pink: #FF3399;
+    /* modern-animated-sign-in tokens */
+    --skeleton: hsl(218, 36%, 16%);
+    --btn-border: hsl(217deg, 32.6%, 17.5%);
   }
 
   * { @apply border-border; }
@@ -184,6 +187,12 @@
   .btn-teal:hover {
     background: rgba(20,184,166,0.08);
     border-color: rgba(20,184,166,0.7);
+  }
+
+  /* modern-animated-sign-in button */
+  .g-button {
+    @apply rounded-[var(--radius)] border;
+    border-color: var(--btn-border);
   }
 }
 

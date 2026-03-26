@@ -51,6 +51,8 @@ export default {
         "scale-in":    "scale-in 0.3s ease forwards",
         shimmer:       "shimmer 1.5s infinite",
         spotlight:     "spotlight 2s ease 0.75s forwards",
+        ripple:        "ripple 2s ease calc(var(--i, 0) * 0.2s) infinite",
+        orbit:         "orbit calc(var(--duration) * 1s) linear infinite",
       },
       keyframes: {
         spotlight: {
@@ -78,6 +80,14 @@ export default {
         "scale-in": {
           from: { opacity: "0", transform: "scale(0.95)" },
           to:   { opacity: "1", transform: "scale(1)" },
+        },
+        ripple: {
+          "0%, 100%": { transform: "translate(-50%, -50%) scale(1)" },
+          "50%":      { transform: "translate(-50%, -50%) scale(0.9)" },
+        },
+        orbit: {
+          "0%":   { transform: "rotate(0deg) translateY(calc(var(--radius) * 1px)) rotate(0deg)" },
+          "100%": { transform: "rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg)" },
         },
       },
       boxShadow: {

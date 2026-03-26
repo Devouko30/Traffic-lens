@@ -1,243 +1,167 @@
-import { cn } from "../../lib/utils";
-import { useState, FormEvent } from "react";
-import { Activity, Mail, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, ChangeEvent, FormEvent } from "react";
+import { Activity } from "lucide-react";
 import { useAuth } from "../../hooks/AuthContext";
+import { AnimatedForm, Ripple, TechOrbitDisplay } from "./modern-animated-sign-in";
 
 type Mode = "signin" | "signup";
+
+type FormData = { email: string; password: string };
+
+// Tech icons using devicons CDN
+const iconsArray = [
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg" alt="React" className="w-full h-full" />,
+    className: "size-[36px] border-none bg-transparent",
+    duration: 20, delay: 0, radius: 90, path: false, reverse: false,
+  },
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/typescript/typescript-original.svg" alt="TypeScript" className="w-full h-full" />,
+    className: "size-[36px] border-none bg-transparent",
+    duration: 20, delay: 10, radius: 90, path: false, reverse: false,
+  },
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg" alt="Tailwind" className="w-full h-full" />,
+    className: "size-[32px] border-none bg-transparent",
+    duration: 25, delay: 5, radius: 160, path: false, reverse: true,
+  },
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" className="w-full h-full" />,
+    className: "size-[32px] border-none bg-transparent",
+    duration: 25, delay: 15, radius: 160, path: false, reverse: true,
+  },
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/fastapi/fastapi-original.svg" alt="FastAPI" className="w-full h-full" />,
+    className: "size-[40px] border-none bg-transparent",
+    duration: 30, delay: 8, radius: 230, path: false, reverse: false,
+  },
+  {
+    component: () => <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original.svg" alt="Docker" className="w-full h-full" />,
+    className: "size-[40px] border-none bg-transparent",
+    duration: 30, delay: 20, radius: 230, path: false, reverse: false,
+  },
+];
 
 export const AuthSwitch = () => {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState<FormData>({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function reset() {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>, name: keyof FormData) => {
+    setFormData((prev) => ({ ...prev, [name]: e.target.value }));
     setError("");
-    setInfo("");
-  }
+  };
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    reset();
+  const handleSubmit = async (_e: FormEvent<HTMLFormElement>) => {
+    setError("");
     setLoading(true);
     try {
       if (mode === "signup") {
         try {
-          await register(email, password);
+          await register(formData.email, formData.password);
         } catch (err: any) {
           const msg: string = err?.message ?? "";
           if (msg === "CHECK_EMAIL") {
-            setInfo("Check your email to confirm your account.");
-          } else if (
-            msg.toLowerCase().includes("already registered") ||
-            msg.toLowerCase().includes("already been registered") ||
-            msg.includes("409")
-          ) {
-            setInfo("Account exists — signing you in...");
-            await login(email, password);
+            setError("Check your email to confirm your account.");
+          } else if (msg.toLowerCase().includes("already registered") || msg.includes("409")) {
+            await login(formData.email, formData.password);
           } else {
-            setError(msg || "Registration failed. Try again.");
+            setError(msg || "Registration failed.");
           }
         }
       } else {
-        await login(email, password);
+        await login(formData.email, formData.password);
       }
     } catch (err: any) {
-      setError(err?.message || "Something went wrong. Try again.");
+      setError(err?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const formFields = {
+    header: mode === "signin" ? "Welcome back" : "Create account",
+    subHeader: mode === "signin"
+      ? "Sign in to Traffic Lens Africa"
+      : "Start monitoring traffic with AI",
+    fields: [
+      {
+        label: "Email",
+        required: true,
+        type: "email" as const,
+        placeholder: "you@example.com",
+        onChange: (e: ChangeEvent<HTMLInputElement>) => handleInputChange(e, "email"),
+      },
+      {
+        label: "Password",
+        required: true,
+        type: "password" as const,
+        placeholder: "",
+        onChange: (e: ChangeEvent<HTMLInputElement>) => handleInputChange(e, "password"),
+      },
+    ],
+    submitButton: loading ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Account",
+    textVariantButton: mode === "signin" ? "Don't have an account? Sign up" : "Already have an account? Sign in",
+    errorField: error,
+  };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Card */}
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-3xl",
-          "bg-[#0A0A0A] border border-white/10",
-          "shadow-[0_32px_80px_rgba(0,0,0,0.7)]"
-        )}
-      >
-        {/* Top shimmer line */}
-        <div className="absolute top-0 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-        {/* Background glow orbs */}
-        <div className="pointer-events-none absolute -top-32 -left-32 w-64 h-64 rounded-full bg-teal-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-32 w-64 h-64 rounded-full bg-[#D4FF33]/15 blur-3xl" />
-
-        <div className="relative z-10 p-10">
-          {/* Logo + title */}
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center shadow-[0_0_28px_rgba(20,184,166,0.3)]">
-              <Activity className="w-7 h-7 text-teal-400" />
-            </div>
-            <div className="text-center">
-              <h1 className="text-lg font-black tracking-widest uppercase text-white">
-                Traffic Lens{" "}
-                <span className="text-[#D4FF33] drop-shadow-[0_0_12px_rgba(212,255,51,0.6)]">
-                  Africa
-                </span>
-              </h1>
-              <p className="text-xs text-white/40 mt-1">AI-powered traffic monitoring</p>
-            </div>
-          </div>
-
-          {/* Mode toggle */}
-          <div className="relative flex bg-white/5 rounded-2xl p-1 mb-8 border border-white/8">
-            {/* Sliding pill */}
-            <div
-              className={cn(
-                "absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-all duration-300 ease-in-out",
-                "bg-[#D4FF33] shadow-[0_0_20px_rgba(212,255,51,0.5)]",
-                mode === "signin" ? "left-1" : "left-[calc(50%+3px)]"
-              )}
-            />
-            {(["signin", "signup"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); reset(); }}
-                className={cn(
-                  "relative z-10 flex-1 py-2.5 text-xs font-black tracking-widest uppercase rounded-xl transition-colors duration-300",
-                  mode === m ? "text-[#0A0A0A]" : "text-white/40 hover:text-white/60"
-                )}
-              >
-                {m === "signin" ? "Sign In" : "Sign Up"}
-              </button>
-            ))}
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* Email */}
-            <div className="group relative">
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-white/40 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[#D4FF33] transition-colors" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  className={cn(
-                    "w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder:text-white/20",
-                    "bg-white/5 border border-white/10 outline-none",
-                    "focus:border-[#D4FF33]/50 focus:shadow-[0_0_0_3px_rgba(212,255,51,0.08)]",
-                    "transition-all duration-200"
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="group relative">
-              <label className="block text-[10px] font-bold tracking-widest uppercase text-white/40 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[#D4FF33] transition-colors" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                  className={cn(
-                    "w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder:text-white/20",
-                    "bg-white/5 border border-white/10 outline-none",
-                    "focus:border-[#D4FF33]/50 focus:shadow-[0_0_0_3px_rgba(212,255,51,0.08)]",
-                    "transition-all duration-200"
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Info message */}
-            {info && (
-              <div className="flex items-center gap-2 text-xs text-green-400 bg-green-400/8 border border-green-400/20 rounded-xl px-3 py-2.5">
-                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                {info}
-              </div>
-            )}
-
-            {/* Error message */}
-            {error && (
-              <div className="flex items-center gap-2 text-xs text-red-400 bg-red-400/8 border border-red-400/20 rounded-xl px-3 py-2.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {error}
-              </div>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={cn(
-                "mt-1 w-full flex items-center justify-center gap-2",
-                "py-3.5 rounded-2xl text-xs font-black tracking-widest uppercase",
-                "bg-[#D4FF33] text-[#0A0A0A]",
-                "shadow-[0_0_24px_rgba(212,255,51,0.45)]",
-                "hover:shadow-[0_0_36px_rgba(212,255,51,0.65)] hover:scale-[1.02]",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none",
-                "transition-all duration-200"
-              )}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {mode === "signin" ? "Signing in..." : "Creating account..."}
-                </>
-              ) : (
-                <>
-                  {mode === "signin" ? "Sign In" : "Create Account"}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-white/8" />
-            <span className="text-[10px] text-white/25 tracking-widest uppercase">or continue with</span>
-            <div className="flex-1 h-px bg-white/8" />
-          </div>
-
-          {/* Social placeholders */}
-          <div className="flex gap-3">
-            {[
-              { label: "Google", icon: "G" },
-              { label: "GitHub", icon: <User className="w-4 h-4" /> },
-            ].map(({ label, icon }) => (
-              <button
-                key={label}
-                type="button"
-                disabled
-                title={`${label} (coming soon)`}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl",
-                  "bg-white/5 border border-white/8 text-white/30",
-                  "text-xs font-semibold tracking-wide",
-                  "cursor-not-allowed opacity-50"
-                )}
-              >
-                <span className="text-sm font-bold">{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+    <section className="flex min-h-screen bg-[#0A0A0A]">
+      {/* Left  orbit display */}
+      <div className="hidden lg:flex w-1/2 relative flex-col items-center justify-center overflow-hidden border-r border-white/5">
+        {/* Background blobs */}
+        <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-teal-500/15 blur-[100px]" />
+        <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-[#D4FF33]/10 blur-[100px]" />
+        <Ripple mainCircleSize={120} numCircles={7} />
+        <TechOrbitDisplay iconsArray={iconsArray} text="Traffic Lens" />
+        <p className="absolute bottom-8 text-xs text-white/20 tracking-widest uppercase">
+          AI-powered traffic monitoring
+        </p>
       </div>
-    </div>
+
+      {/* Right  form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-8 relative">
+        {/* Mobile blobs */}
+        <div className="pointer-events-none absolute top-0 right-0 w-64 h-64 rounded-full bg-[#D4FF33]/8 blur-[80px] lg:hidden" />
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(20,184,166,0.25)]">
+            <Activity className="w-5 h-5 text-teal-400" />
+          </div>
+          <span className="text-sm font-black tracking-widest uppercase text-white">
+            Traffic Lens <span className="text-[#D4FF33]">Africa</span>
+          </span>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="relative flex bg-white/5 rounded-2xl p-1 mb-8 border border-white/8 w-full max-w-sm">
+          <div
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-xl transition-all duration-300 bg-[#D4FF33] shadow-[0_0_16px_rgba(212,255,51,0.4)]"
+            style={{ left: mode === "signin" ? "4px" : "calc(50% + 3px)" }}
+          />
+          {(["signin", "signup"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => { setMode(m); setError(""); }}
+              className={`relative z-10 flex-1 py-2 text-xs font-black tracking-widest uppercase rounded-xl transition-colors duration-300 ${
+                mode === m ? "text-[#0A0A0A]" : "text-white/40 hover:text-white/60"
+              }`}
+            >
+              {m === "signin" ? "Sign In" : "Sign Up"}
+            </button>
+          ))}
+        </div>
+
+        <AnimatedForm
+          {...formFields}
+          onSubmit={handleSubmit}
+          goTo={() => setMode(mode === "signin" ? "signup" : "signin")}
+        />
+      </div>
+    </section>
   );
 };
 
