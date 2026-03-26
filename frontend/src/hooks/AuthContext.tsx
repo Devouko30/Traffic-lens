@@ -8,6 +8,7 @@ interface AuthCtx {
   session: Session | null;
   ready: boolean;
   isAuthenticated: boolean;
+  configured: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -23,11 +24,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!supabaseConfigured) { setReady(true); return; }
+    if (!supabaseConfigured) {
+      setReady(true);
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setReady(true);
-    });
+    }).catch(() => setReady(true));
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
@@ -37,22 +41,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
+    if (!supabaseConfigured) throw new Error("App not configured — contact admin.");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     navigate("/dashboard", { replace: true });
   }, [navigate]);
 
   const register = useCallback(async (email: string, password: string) => {
+    if (!supabaseConfigured) throw new Error("App not configured — contact admin.");
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
-    // If session is returned immediately, user is logged in (email confirm disabled)
     if (data.session) return;
-    // No session means email confirmation is required
     throw new Error("CHECK_EMAIL");
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    if (supabaseConfigured) await supabase.auth.signOut();
     navigate("/login", { replace: true });
   }, [navigate]);
 
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       ready,
       isAuthenticated: !!session,
+      configured: supabaseConfigured,
       login, register, logout, authHeader, getToken,
     }}>
       {children}
