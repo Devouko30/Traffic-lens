@@ -17,23 +17,52 @@ export default defineConfig({
     },
   },
   build: {
+    // Increase warning threshold — we know some chunks are large
+    chunkSizeWarningLimit: 600,
+    // Minify with esbuild (default, fastest)
+    minify: "esbuild",
+    // Enable CSS code splitting
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-charts": ["recharts"],
-          "vendor-motion": ["framer-motion"],
-          "vendor-ui": [
-            "@radix-ui/react-avatar",
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-scroll-area",
-            "@radix-ui/react-select",
-            "@radix-ui/react-separator",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-tooltip",
-          ],
+        // Fine-grained manual chunks — each loads only when needed
+        manualChunks(id) {
+          // React core — always needed, load first
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "vendor-react";
+          }
+          // Router
+          if (id.includes("node_modules/react-router-dom") || id.includes("node_modules/react-router/")) {
+            return "vendor-router";
+          }
+          // Supabase — auth only, lazy
+          if (id.includes("node_modules/@supabase/")) {
+            return "vendor-supabase";
+          }
+          // Charts — only on analytics page
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/d3-")) {
+            return "vendor-charts";
+          }
+          // Framer motion — sidebar + login animations
+          if (id.includes("node_modules/framer-motion")) {
+            return "vendor-motion";
+          }
+          // Radix UI
+          if (id.includes("node_modules/@radix-ui/")) {
+            return "vendor-radix";
+          }
+          // Tanstack query
+          if (id.includes("node_modules/@tanstack/")) {
+            return "vendor-query";
+          }
+          // Spline 3D — very heavy, isolate it
+          if (id.includes("node_modules/@splinetool/")) {
+            return "vendor-spline";
+          }
+          // Everything else in node_modules
+          if (id.includes("node_modules/")) {
+            return "vendor-misc";
+          }
         },
       },
     },
