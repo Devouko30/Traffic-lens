@@ -1,18 +1,32 @@
-﻿"use client";
-import { useState, useRef } from "react";
+"use client";
+import { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, BarChart3, MapPin, LogOut, Activity, ChevronDown, Car, Truck, Bus, Camera, Upload } from "lucide-react";
+import { LayoutDashboard, BarChart3, MapPin, LogOut, Activity, ChevronDown, Car, Truck, Bus, Settings, User, Camera } from "lucide-react";
 import { useAuth } from "../../hooks/AuthContext";
 import { supabase } from "../../lib/supabase";
 
-function UserProfile({ onClose: _onClose }: { onClose?: () => void }) {
-  const { user } = useAuth();
+//  Profile dropdown in top navbar 
+export function ProfileDropdown() {
+  const { user, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const dropRef = useRef<HTMLDivElement>(null);
+
   const email = user?.email ?? "user@example.com";
   const initials = email[0]?.toUpperCase() ?? "U";
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -27,30 +41,85 @@ function UserProfile({ onClose: _onClose }: { onClose?: () => void }) {
       }
     } finally { setUploading(false); e.target.value = ""; }
   }
+
   return (
-    <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-      <div className="flex items-center gap-3">
-        <div className="relative shrink-0 group">
-          <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold relative" style={{ background: avatarUrl ? "transparent" : "rgba(212,255,51,0.15)", color: "#D4FF33", border: "1.5px solid rgba(212,255,51,0.25)" }} title="Upload profile photo">
-            {avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" /> : <span>{initials}</span>}
-            <span className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
-              {uploading ? <span className="w-3 h-3 border-2 border-[#D4FF33] border-t-transparent rounded-full animate-spin" /> : <Camera className="w-3.5 h-3.5 text-[#D4FF33]" />}
-            </span>
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+    <div className="relative" ref={dropRef}>
+      {/* Avatar trigger */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-xl transition-colors hover:bg-white/5"
+      >
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold shrink-0" style={{ background: avatarUrl ? "transparent" : "rgba(212,255,51,0.15)", color: "#D4FF33", border: "1.5px solid rgba(212,255,51,0.25)" }}>
+          {avatarUrl ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" /> : <span>{initials}</span>}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-white truncate">{email}</p>
-          <span className="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-full mt-0.5 inline-block" style={{ background: "rgba(212,255,51,0.12)", color: "#D4FF33", border: "1px solid rgba(212,255,51,0.2)" }}>Operator</span>
+        <div className="hidden sm:block text-left">
+          <p className="text-xs font-semibold text-white leading-none truncate max-w-[120px]">{email}</p>
+          <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: "#D4FF33" }}>Operator</span>
         </div>
-        <button onClick={() => fileInputRef.current?.click()} className="shrink-0 p-1.5 rounded-lg transition-colors hover:bg-white/5" title="Upload profile photo" style={{ color: "rgba(255,255,255,0.3)" }}>
-          <Upload className="w-3.5 h-3.5" />
-        </button>
-      </div>
+        <ChevronDown className="w-3 h-3 text-white/30 hidden sm:block" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
+      </button>
+
+      {/* Dropdown */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden z-50"
+            style={{ background: "rgba(15,15,15,0.95)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 16px 48px rgba(0,0,0,0.6)" }}
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <p className="text-xs font-semibold text-white truncate">{email}</p>
+              <span className="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-full mt-1 inline-block" style={{ background: "rgba(212,255,51,0.12)", color: "#D4FF33", border: "1px solid rgba(212,255,51,0.2)" }}>Operator</span>
+            </div>
+
+            {/* Upload photo */}
+            <button
+              onClick={() => { fileInputRef.current?.click(); setOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              {uploading
+                ? <span className="w-3.5 h-3.5 border-2 border-[#D4FF33] border-t-transparent rounded-full animate-spin" />
+                : <Camera className="w-3.5 h-3.5" />
+              }
+              {uploading ? "Uploading..." : "Upload Photo"}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+
+            <div className="border-t mx-3 my-1" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+
+            {/* Sign out */}
+            <button
+              onClick={() => { setOpen(false); logout(); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-colors mb-1"
+              style={{ color: "rgba(248,113,113,0.8)" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.08)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
+//  Top navbar  spans full width of content area, visible on ALL screen sizes 
+function TopNavbar() {
+  return (
+    <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-20 w-full" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(212,255,51,0.06)" }}>
+      <span />
+      <ProfileDropdown />
+    </div>
+  );
+}
+
+//  Animated hamburger 
 function AnimatedMenuToggle({ toggle, isOpen }: { toggle: () => void; isOpen: boolean }) {
   return (
     <button onClick={toggle} aria-label="Toggle menu" className="focus:outline-none z-[999] p-1">
@@ -65,6 +134,7 @@ function AnimatedMenuToggle({ toggle, isOpen }: { toggle: () => void; isOpen: bo
   );
 }
 
+//  Collapsible section 
 function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -84,6 +154,7 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
   );
 }
 
+//  Nav item 
 function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   return (
     <NavLink to={to}>
@@ -98,6 +169,7 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
   );
 }
 
+//  Sidebar content (no user profile section) 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const { logout } = useAuth();
   async function handleLogout() { onClose?.(); await logout(); }
@@ -114,7 +186,6 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </div>
         </div>
       </div>
-      <UserProfile onClose={onClose} />
       <nav className="flex-1 p-3 overflow-y-auto">
         <div className="mb-2" style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.25)", letterSpacing: "0.12em", textTransform: "uppercase", padding: "0 12px 6px" }}>Monitor</div>
         <NavItem to="/dashboard" icon={<LayoutDashboard style={{ width: 16, height: 16 }} />} label="Dashboard" />
@@ -148,7 +219,9 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div className="flex min-h-screen" style={{ background: "#0A0A0A" }}>
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col fixed top-0 left-0 h-full w-60 z-30" style={GLASS}><SidebarContent /></aside>
+      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -159,13 +232,23 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           </>
         )}
       </AnimatePresence>
+      {/* Main content area */}
       <div className="flex-1 md:ml-60 flex flex-col min-h-screen">
-        <div className="md:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-20" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(212,255,51,0.07)" }}>
-          <div className="flex items-center gap-2">
+        {/* Top navbar  full width, visible on ALL screen sizes */}
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 sticky top-0 z-20 w-full" style={{ background: "rgba(10,10,10,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(212,255,51,0.06)" }}>
+          {/* Left: hamburger on mobile, spacer on desktop */}
+          <div className="md:hidden flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(212,255,51,0.12)", border: "1px solid rgba(212,255,51,0.2)" }}><Activity style={{ width: 14, height: 14, color: "#D4FF33" }} /></div>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#FFFFFF", letterSpacing: "0.05em" }}>TRAFFIC LENS</span>
           </div>
-          <AnimatedMenuToggle toggle={() => setMobileOpen(v => !v)} isOpen={mobileOpen} />
+          <span className="hidden md:block" />
+          {/* Right: profile dropdown + hamburger on mobile */}
+          <div className="flex items-center gap-2">
+            <ProfileDropdown />
+            <div className="md:hidden">
+              <AnimatedMenuToggle toggle={() => setMobileOpen(v => !v)} isOpen={mobileOpen} />
+            </div>
+          </div>
         </div>
         <main className="flex-1">{children}</main>
       </div>
