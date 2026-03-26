@@ -2,12 +2,20 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import axios from "axios";
 import App from "./App";
 import { ToastProvider } from "./components/ui/toast";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider } from "./hooks/AuthContext";
 import { Toaster } from "sonner";
 import "./index.css";
+
+// Point axios at the deployed backend when VITE_API_BASE_URL is set
+// Falls back to relative paths (works with local vite proxy)
+const apiBase = import.meta.env.VITE_API_BASE_URL as string | undefined;
+if (apiBase) {
+  axios.defaults.baseURL = apiBase;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
