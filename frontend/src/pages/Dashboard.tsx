@@ -261,14 +261,18 @@ export default function Dashboard() {
 
   const { data: sites = [], refetch: refetchSites } = useQuery<Site[]>({
     queryKey: ["sites"],
-    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() }).then(r => r.data),
+    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => []),
   });
 
   const { data: summary = [] } = useQuery<SummaryItem[]>({
     queryKey: ["summary", siteId],
     enabled: !!siteId,
     queryFn: () =>
-      axios.get(`/api/v1/sites/${siteId}/summary`, { headers: authHeader() }).then(r => r.data),
+      axios.get(`/api/v1/sites/${siteId}/summary`, { headers: authHeader() })
+        .then(r => Array.isArray(r.data) ? r.data : [])
+        .catch(() => []),
     refetchInterval: 30_000,
   });
 
@@ -276,7 +280,9 @@ export default function Dashboard() {
     queryKey: ["plates", siteId],
     enabled: !!siteId,
     queryFn: () =>
-      axios.get(`/api/v1/sites/${siteId}/plates`, { headers: authHeader() }).then(r => r.data),
+      axios.get(`/api/v1/sites/${siteId}/plates`, { headers: authHeader() })
+        .then(r => Array.isArray(r.data) ? r.data : [])
+        .catch(() => []),
     refetchInterval: 15_000,
   });
 

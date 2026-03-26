@@ -193,7 +193,9 @@ export default function Sites() {
 
   const { data: sites = [], isLoading } = useQuery<Site[]>({
     queryKey: ["sites"],
-    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() }).then(r => r.data),
+    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => []),
   });
 
   const filtered = sites.filter(

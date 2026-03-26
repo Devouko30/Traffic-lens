@@ -65,20 +65,26 @@ export default function Analytics() {
 
   const { data: sites = [] } = useQuery<Site[]>({
     queryKey: ["sites"],
-    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() }).then(r => r.data),
+    queryFn: () => axios.get("/api/v1/sites", { headers: authHeader() })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => []),
   });
 
   const { data: hourly = [], isLoading: loadingHourly } = useQuery<HourlyBucket[]>({
     queryKey: ["hourly", siteId, hours],
     enabled: !!siteId,
-    queryFn: () => axios.get(`/api/v1/analytics/${siteId}/hourly?hours=${hours}`, { headers: authHeader() }).then(r => r.data),
+    queryFn: () => axios.get(`/api/v1/analytics/${siteId}/hourly?hours=${hours}`, { headers: authHeader() })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => []),
     refetchInterval: 60_000,
   });
 
   const { data: stats } = useQuery<SiteStats>({
     queryKey: ["stats", siteId],
     enabled: !!siteId,
-    queryFn: () => axios.get(`/api/v1/analytics/${siteId}/stats`, { headers: authHeader() }).then(r => r.data),
+    queryFn: () => axios.get(`/api/v1/analytics/${siteId}/stats`, { headers: authHeader() })
+      .then(r => r.data && typeof r.data === "object" && !Array.isArray(r.data) ? r.data : null)
+      .catch(() => null),
     refetchInterval: 60_000,
   });
 
