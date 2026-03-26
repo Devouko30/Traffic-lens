@@ -1,6 +1,4 @@
-'use client';
 import { useEffect, useRef, useState, ReactNode } from 'react';
-import { motion } from 'framer-motion';
 
 interface ScrollExpandMediaProps {
   mediaSrc: string;
@@ -207,14 +205,15 @@ const ScrollExpandMedia = ({
             </div>
 
             {/* ── Revealed content ── */}
-            <motion.section
-              style={{ width: '100%', padding: '40px 32px' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: showContent ? 1 : 0 }}
-              transition={{ duration: 0.7 }}
+            <div
+              style={{
+                width: '100%', padding: '40px 32px',
+                opacity: showContent ? 1 : 0,
+                transition: 'opacity 0.7s ease',
+              }}
             >
               {children}
-            </motion.section>
+            </div>
           </div>
         </div>
       </section>
