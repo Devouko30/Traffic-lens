@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import ScrollExpandMedia from "../components/ui/scroll-expansion-hero";
+import { GlowCard } from "../components/ui/spotlight-card";
 import { Activity, BarChart3, Shield, Zap, ArrowRight, Eye, Cpu, Car, CheckCircle } from "lucide-react";
 
 const DETECTION_OVERLAY = "/detection-overlay.png";
@@ -82,14 +83,21 @@ function HeroContent() {
           <span style={{ color: "#fff", opacity: 0.6 }}>to monitor traffic</span>
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 12 }}>
-          {features.map(f => (
-            <div key={f.title} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: "20px", backdropFilter: "blur(16px)" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+          {features.map((f, i) => (
+            <GlowCard
+              key={f.title}
+              customSize
+              glowColor={["lime", "teal", "lime", "teal", "lime", "teal"][i % 6] as "lime" | "teal"}
+              className="w-full h-auto min-h-[140px] aspect-auto p-5 flex flex-col gap-3"
+            >
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {f.icon}
               </div>
-              <h3 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6, color: "#fff" }}>{f.title}</h3>
-              <p style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>{f.desc}</p>
-            </div>
+              <div>
+                <h3 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6, color: "#fff" }}>{f.title}</h3>
+                <p style={{ fontSize: 12, color: MUTED, lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+              </div>
+            </GlowCard>
           ))}
         </div>
       </section>
