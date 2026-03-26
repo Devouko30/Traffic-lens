@@ -12,6 +12,11 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, message: error.message };
   }
 
+  componentDidCatch(error: Error) {
+    // Log for debugging
+    console.error("ErrorBoundary caught:", error);
+  }
+
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
